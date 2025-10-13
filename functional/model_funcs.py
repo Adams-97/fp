@@ -8,20 +8,20 @@ def t(t: Dimension):
     return t
 
 
-def num_alive(t: Dimension, general: GeneralData):
+def num_alive(t: Dimension, general: GeneralData, individual: IndividualData):
     """probability that life is alive at time t, given alive at time 0"""
     if t == 0:
         return 1
     else:
-        return num_alive(t - 1, general) - num_deaths(t - 1, general)
+        return num_alive(t - 1, general, individual) - num_deaths(t - 1, general, individual)
 
 
-def num_deaths(t: Dimension, general: GeneralData):
+def num_deaths(t: Dimension, general: GeneralData, indidivdual: IndividualData):
     """number of deaths occuring between time t-1 and t"""
-    if t.value < 0:
+    if t < 0:
         return 0
     else:
-        return num_alive(t, general) * q_x_m(t, general)
+        return num_alive(t, general, indidivdual) * q_x_m(t, general, indidivdual)
 
 
 def q_x(t: Dimension, general: GeneralData, individual: IndividualData):
@@ -45,7 +45,7 @@ def age(t: Dimension, individual: IndividualData):
 
 
 def expected_claim(t: Dimension, individual: IndividualData, general: GeneralData):
-    return individual.values["sum_assured"] * num_deaths(t, general)
+    return individual.values["sum_assured"] * num_deaths(t, general, individual)
 
 
 def v(t: Dimension, general: GeneralData):

@@ -45,7 +45,7 @@ def apply_and_cache(funcs: dict[str, tuple[Callable, FuncInfo]], individual: Ind
         if func_info.individual_name != '':
             stored_func = partial(func, **{func_info.individual_name: individual})
 
-        cached_func = lru_cache()(stored_func)
+        cached_func = lru_cache(maxsize=None)(stored_func)
         output_funcs[func_name] = (cached_func, func_info.dimensions)
 
     return output_funcs
@@ -79,8 +79,8 @@ model_instance = apply_and_cache(model_template, individual)
 initial_dimension = Dimension('t', 0)
 output_results = {}
 
-for func_name, (func, dimensions) in model_instance:
-    func_res = []
-for t in range(0, 361):
-    print(f'Running {t}')
-    result.append(age_func[0](t))
+
+alive_func, _ = model_instance['num_alive']
+alive_func(10)
+alive_func(11)
+print(alive_func.cache_info())
