@@ -2,7 +2,7 @@ from functional.dimension import Dimension
 from functional.reference import RefData
 
 
-def t(t: Dimension, data: RefData):
+def t(t: Dimension, ref: RefData):
     """time"""
     return t
 
