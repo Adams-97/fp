@@ -15,3 +15,12 @@ class RefTable:
             print(f'Index error on value: {value} and column: {column}')
             max_index = self.data[column].idxmax()
             return self.data.loc[max_index][res_col]
+
+
+@dataclass(frozen=True)
+class RefData:
+    tables: dict[str, RefTable] | None = None
+    values: dict[str, Any] | None = None
+
+    def __hash__(self):
+        return hash(id(self))

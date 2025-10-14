@@ -68,6 +68,12 @@ class Dimension:
             return self.value >= other.value
         return self.value >= other
 
+    def __mod__(self, other):
+        if isinstance(other, Dimension):
+            self._check_equal_name(other)
+            return self.value % other.value
+        return self.value % other
+
     def _check_equal_name(self, other: 'Dimension'):
         if self.name != other.name:
             raise ValueError('Trying to perform operation on two different dimensions')
