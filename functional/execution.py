@@ -24,7 +24,7 @@ def run_calcs(calcs: list[Calc], data: RefData, result_handler: ResultHandler, d
     # Run dimensionless functions first
     for calc in calcs_by_type[CalcType.NO_DIM_OR_REF] or calcs_by_type[CalcType.NO_DIM_BUT_REF]:
         if calc.calc_type == CalcType.NO_DIM_OR_REF:
-            result_handler.add_result(calc.cached_func())
+            result_handler.add_result(calc.function())
         else:
-            result_handler.add_result(calc.cached_func(**{calc.data_name: data}))
+            result_handler.add_result(calc.function(**{calc.data_name: data}))
 

@@ -28,17 +28,17 @@ class CalcType(Enum):
 @dataclass(frozen=True)
 class Calc:
     name: str
-    cached_func: Callable
+    function: Callable
     calc_type: CalcType
     dimensions: list[str] | None = None
     data_name: str | None = None
 
     @staticmethod
-    def create(cached_func: Callable) -> 'Calc':
-        dimensions, data_name = Calc._extract_function_args(cached_func)
+    def create(function: Callable) -> 'Calc':
+        dimensions, data_name = Calc._extract_function_args(function)
         calc_type = CalcType.from_arguments(dimensions, data_name)
-        return Calc(name=cached_func.__name__,
-                    cached_func=cached_func,
+        return Calc(name=function.__name__,
+                    function=function,
                     calc_type=calc_type,
                     dimensions=dimensions,
                     data_name=data_name)
