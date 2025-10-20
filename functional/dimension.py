@@ -88,7 +88,7 @@ class Time(Dimension):
         super().__init__(name='t', value=value)
 
 
-class SecondaryDimension(ABC):
+class SecondaryDimension(Dimension):
     pass
 
 
@@ -105,7 +105,7 @@ class YieldCurve(SecondaryDimension):
 T = TypeVar('T')
 
 
-class _OneValDimDict(dict[type[Dimension], T], Generic[T]):
+class OneValDimDict(dict[type[Dimension], T], Generic[T]):
     def __setitem__(self, key: Type[Dimension], value: T):
         if not issubclass(key, Dimension):
             raise KeyError('Key must be dim')
@@ -117,7 +117,7 @@ class _OneValDimDict(dict[type[Dimension], T], Generic[T]):
 @dataclass(frozen=True)
 class DimensionRanges:
     t: Iterable
-    non_t: _OneValDimDict[Iterable] = field(default_factory=_OneValDimDict[Iterable])
+    non_t: OneValDimDict[Iterable] = field(default_factory=OneValDimDict[Iterable])
 
     def create_arg_combinations(self, dimensions: Iterable[Type[Dimension]]) -> list[tuple[Dimension, ...]]:
         if not self.non_t:

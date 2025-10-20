@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import NewType, Optional
 
-from functional.dimension import DimensionRanges, _OneValDimDict, Time, SecondaryDimension, Dimension
+from functional.dimension import DimensionRanges, OneValDimDict, Time, SecondaryDimension, Dimension
 from functional.reference import RefData
 
 TimeArgName = NewType('TimeArgName', str)
@@ -25,7 +25,7 @@ class CalcType(Enum):
     @staticmethod
     def from_arguments(t_name: Optional[TimeArgName],
                        data_name: Optional[RefDataArgName],
-                       secondary_dims: Optional[_OneValDimDict[str]]) -> 'CalcType':
+                       secondary_dims: Optional[OneValDimDict[str]]) -> 'CalcType':
         match (t_name is not None, data_name is not None, secondary_dims is not None):
             case (False, False, False):
                 return CalcType.NO_ARGS
@@ -57,6 +57,15 @@ class Calc:
     def t_dependent(self):
         return self.t_arg_name is not None
 
+    @property
+    def cache_info(self) -> str:
+        func = self.function.func if isinstance(self.function, functools.partial) else self.function
+        cache_info = getattr(func, 'cache_info', None)
+        if callable(cache_info):
+            return str(cache_info())
+        else:
+            return ""
+
 
 class CalcCreator:
 
@@ -79,8 +88,8 @@ class CalcCreator:
             return [template_instance]
 
     @staticmethod
-    def _find_dim_data_and_t_args(func: Callable) -> tuple[Optional[_OneValDimDict[str]], Optional[TimeArgName], Optional[RefDataArgName]]:
-        dimension_tracker: _OneValDimDict[str] = _OneValDimDict[str]()
+    def _find_dim_data_and_t_args(func: Callable) -> tuple[Optional[OneValDimDict[str]], Optional[TimeArgName], Optional[RefDataArgName]]:
+        dimension_tracker: OneValDimDict[str] = OneValDimDict[str]()
         ref_data_name: Optional[RefDataArgName] = None
         t_arg_name: Optional[TimeArgName] = None
 
@@ -88,12 +97,12 @@ class CalcCreator:
             if issubclass(param.annotation, SecondaryDimension):
                 dimension_tracker[param.annotation] = param.name
             elif param.annotation == Time:
-                if t_arg_name is not None:
+                if t_arg_name is None:
                     t_arg_name = TimeArgName(param.name)
                 else:
                     raise ValueError('More than 1 Time argument in function')
             elif param.annotation == RefData:
-                if ref_data_name is not None:
+                if ref_data_name is None:
                     ref_data_name = RefDataArgName(param.name)
                 else:
                     raise ValueError('More than 1 RefData argument in function')
@@ -101,7 +110,7 @@ class CalcCreator:
 
     @staticmethod
     def _create_partial_applied_calcs(dim_combinations: list[tuple[Dimension, ...]],
-                                      dim_arg_names: _OneValDimDict[str],
+                                      dim_arg_names: OneValDimDict[str],
                                       template: Calc) -> list[Calc]:
         calcs: list[Calc] = []
         for combo in dim_combinations:
