@@ -22,8 +22,8 @@ def run_calcs(calcs: list[Calc], data: RefData, result_handler: ResultHandler, d
     calcs_by_type: dict[CalcType, list[Calc]] = _group_calc_types(calcs)
 
     # Run dimensionless functions first
-    for calc in calcs_by_type[CalcType.NO_DIM_OR_REF] or calcs_by_type[CalcType.NO_DIM_BUT_REF]:
-        if calc.calc_type == CalcType.NO_DIM_OR_REF:
+    for calc in calcs_by_type[CalcType.ALL] or calcs_by_type[CalcType.TIME_AND_SECONDARY_DIMS]:
+        if calc.calc_type == CalcType.ALL:
             result_handler.add_result(calc.function())
         else:
             result_handler.add_result(calc.function(**{calc.data_name: data}))
