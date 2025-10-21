@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import NewType, Optional
 
-from src.lib.dimension import DimensionRanges, OneValDimDict, Time, SecondaryDimension, Dimension
+from src.lib.dimension import DimensionRanges, _DimensionDict, Time, AlternativeDimension, Dimension
 from src.lib.reference import RefData
 
 TimeArgName = NewType('TimeArgName', str)
@@ -31,7 +31,7 @@ class CalcType(Enum):
     @staticmethod
     def from_arguments(t_name: Optional[TimeArgName],
                        data_name: Optional[RefDataArgName],
-                       secondary_dims: Optional[OneValDimDict[str]]) -> 'CalcType':
+                       secondary_dims: Optional[_DimensionDict[str]]) -> 'CalcType':
         match (t_name is not None, data_name is not None, secondary_dims is not None):
             case (False, False, False):
                 return CalcType.NO_ARGS
@@ -95,13 +95,13 @@ class CalcCreator:
             return [template_instance]
 
     @staticmethod
-    def _find_dim_data_and_t_args(func: Callable) -> tuple[Optional[OneValDimDict[str]], Optional[TimeArgName], Optional[RefDataArgName]]:
-        dimension_tracker: OneValDimDict[str] = OneValDimDict[str]()
+    def _find_dim_data_and_t_args(func: Callable) -> tuple[Optional[_DimensionDict[str]], Optional[TimeArgName], Optional[RefDataArgName]]:
+        dimension_tracker: _DimensionDict[str] = _DimensionDict[str]()
         ref_data_name: Optional[RefDataArgName] = None
         t_arg_name: Optional[TimeArgName] = None
 
         for param in inspect.signature(func).parameters.values():
-            if issubclass(param.annotation, SecondaryDimension):
+            if issubclass(param.annotation, AlternativeDimension):
                 dimension_tracker[param.annotation] = param.name
             elif param.annotation == Time:
                 if t_arg_name is None:
@@ -117,7 +117,7 @@ class CalcCreator:
 
     @staticmethod
     def _create_partial_applied_calcs(dim_combinations: list[tuple[Dimension, ...]],
-                                      dim_arg_names: OneValDimDict[str],
+                                      dim_arg_names: _DimensionDict[str],
                                       template: Calc) -> list[Calc]:
         calcs: list[Calc] = []
         for combo in dim_combinations:

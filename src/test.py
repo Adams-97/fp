@@ -1,15 +1,19 @@
-from src.lib.reference import CsvTable
+from typing import Iterable
+
+import lib
+
+modules = {'model_funcs'}
+Life = lib.AlternativeDimension.new_alt_dimension_type('life')
+YieldCurve = lib.AlternativeDimension.new_alt_dimension_type('yc')
 
 
-data = CsvTable(['age', 'region', 'sex', 'smoker'], 'lib/expanded_life_table.csv')
-values = {
-    'region': 'North',
-    'sex': ['M', 'F'],
-    'age': 28,
-    'smoker': True
-}
+dim_range = lib.DimensionRanges(
+    range(0, 10),
+    {
+        Life: [1, 2, 3],
+        YieldCurve: [1, 2, 3]
+    }
+)
 
-val = data.lookup(values, 'q_x')
-print(val)
-
-# 28,0.0027597067582892,M,True,North
+lib.load_and_cache_calcs(modules, dim_range)
+1
