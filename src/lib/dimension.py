@@ -1,39 +1,37 @@
 import itertools
 from abc import ABC
 from dataclasses import dataclass, field
-from typing import Union, TypeVar, Iterable, Type, Generic, Optional
-
-number = TypeVar('number', int, float)
+from typing import Union, TypeVar, Iterable, Type, Generic, Any
 
 
 @dataclass(frozen=True)
 class Dimension(ABC):
     name: str
-    value: number
+    value: Any
 
     # Arithmetic operations
-    def __add__(self, other: Union['Dimension', number]):
+    def __add__(self, other: Union['Dimension', Any]):
         if isinstance(other, Dimension):
             self._check_equal_name(other)
             return Dimension(self.name, self.value + other.value)
         else:
             return Dimension(self.name, self.value + other)
 
-    def __sub__(self, other: Union['Dimension', number]):
+    def __sub__(self, other: Union['Dimension', Any]):
         if isinstance(other, Dimension):
             self._check_equal_name(other)
             return Dimension(self.name, self.value - other.value)
         else:
             return Dimension(self.name, self.value - other)
 
-    def __mul__(self, other: Union['Dimension', number]):
+    def __mul__(self, other: Union['Dimension', Any]):
         if isinstance(other, Dimension):
             self._check_equal_name(other)
             return Dimension(self.name, self.value * other.value)
         else:
             return Dimension(self.name, self.value * other)
 
-    def __truediv__(self, other: Union['Dimension', number]):
+    def __truediv__(self, other: Union['Dimension', Any]):
         if isinstance(other, Dimension):
             self._check_equal_name(other)
             return Dimension(self.name, self.value / other.value)
@@ -48,25 +46,25 @@ class Dimension(ABC):
         else:
             return self.value == other
 
-    def __lt__(self, other: Union['Dimension', number]) -> bool:
+    def __lt__(self, other: Union['Dimension', Any]) -> bool:
         if isinstance(other, Dimension):
             self._check_equal_name(other)
             return self.value < other.value
         return self.value < other
 
-    def __le__(self, other: Union['Dimension', number]) -> bool:
+    def __le__(self, other: Union['Dimension', Any]) -> bool:
         if isinstance(other, Dimension):
             self._check_equal_name(other)
             return self.value <= other.value
         return self.value <= other
 
-    def __gt__(self, other: Union['Dimension', number]) -> bool:
+    def __gt__(self, other: Union['Dimension', Any]) -> bool:
         if isinstance(other, Dimension):
             self._check_equal_name(other)
             return self.value > other.value
         return self.value > other
 
-    def __ge__(self, other: Union['Dimension', number]) -> bool:
+    def __ge__(self, other: Union['Dimension', Any]) -> bool:
         if isinstance(other, Dimension):
             self._check_equal_name(other)
             return self.value >= other.value
@@ -84,22 +82,18 @@ class Dimension(ABC):
 
 
 class Time(Dimension):
-    def __init__(self, value: number):
+    def __init__(self, value: Any):
         super().__init__(name='t', value=value)
 
 
-class SecondaryDimension(Dimension):
-    pass
+class SecondaryDimension(Dimension, ABC):
 
-
-class Life(SecondaryDimension):
-    def __init__(self, value: number):
-        super().__init__(name='life', value=value)
-
-
-class YieldCurve(SecondaryDimension):
-    def __init__(self, value: number):
-        super().__init__(name='yc', value=value)
+    @staticmethod
+    def create_type(name: str) -> Type['SecondaryDimension']:
+        class _NewSecondaryDimension(SecondaryDimension):
+            def __init__(self, value):
+                super().__init__(name=name, value=value)
+        return _NewSecondaryDimension
 
 
 T = TypeVar('T')

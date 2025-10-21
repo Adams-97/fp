@@ -1,5 +1,5 @@
-from src.dimension import Dimension
-from src.reference import RefData
+from src.lib.dimension import Dimension
+from src.lib.reference import RefData
 
 
 def t(t: Dimension, ref: RefData):

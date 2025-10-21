@@ -1,7 +1,7 @@
-from reference import CsvTable
+from src.lib.reference import CsvTable
 
 
-data = CsvTable(['age', 'region', 'sex', 'smoker'], 'expanded_life_table.csv')
+data = CsvTable(['age', 'region', 'sex', 'smoker'], 'lib/expanded_life_table.csv')
 values = {
     'region': 'North',
     'sex': ['M', 'F'],

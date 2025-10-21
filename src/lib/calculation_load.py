@@ -4,8 +4,8 @@ import inspect
 from collections.abc import Callable
 from typing import Optional
 
-from src.calculation import Calc, CalcCreator
-from src.dimension import DimensionRanges
+from src.lib.calculation import Calc, CalcCreator
+from src.lib.dimension import DimensionRanges
 
 
 def _already_lru_cached(func: Callable) -> bool:

@@ -5,11 +5,17 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import NewType, Optional
 
-from src.dimension import DimensionRanges, OneValDimDict, Time, SecondaryDimension, Dimension
-from src.reference import RefData
+from src.lib.dimension import DimensionRanges, OneValDimDict, Time, SecondaryDimension, Dimension
+from src.lib.reference import RefData
 
 TimeArgName = NewType('TimeArgName', str)
 RefDataArgName = NewType('RefDataArgName', str)
+
+
+@dataclass(frozen=True)
+class CalcGroup:
+    name: str
+    id: int
 
 
 class CalcType(Enum):
@@ -50,6 +56,7 @@ class Calc:
     name: str
     function: Callable
     calc_type: CalcType
+    calc_group: CalcGroup
     t_arg_name: Optional[TimeArgName]
     data_name: Optional[RefDataArgName]
 
