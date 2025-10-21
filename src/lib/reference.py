@@ -12,7 +12,6 @@ class LookupArgs:
 
 
 class RefTable(ABC):
-
     def __init__(self, index_cols: list[str]):
         self._index_cols: list[str] = index_cols
         self._cache: dict[LookupArgs, Any] = {}
@@ -50,7 +49,7 @@ class RefTable(ABC):
         pass
 
     def interpolated_lookup(self, index_values: dict[str, Any], return_col: str):
-        pass
+        raise NotImplementedError()
 
     def lookup(self, index_values: dict[str, Any], return_col: str, interpolated_lookup: bool = False) -> Any:
         missing_index_cols = [col for col in self.index_cols if col not in index_values.keys()]

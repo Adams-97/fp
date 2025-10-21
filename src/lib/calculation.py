@@ -5,17 +5,12 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import NewType, Optional
 
-from src.lib.dimension import DimensionRanges, _DimensionDict, Time, AlternativeDimension, Dimension
+from src.lib.dimension import DimensionRanges, _DimensionDict, Time, AltDimension, Dimension
 from src.lib.reference import RefData
+from src.lib.registry import _FunctionDetails, FunctionGroup
 
 TimeArgName = NewType('TimeArgName', str)
 RefDataArgName = NewType('RefDataArgName', str)
-
-
-@dataclass(frozen=True)
-class CalcGroup:
-    name: str
-    id: int
 
 
 class CalcType(Enum):
@@ -53,16 +48,22 @@ class CalcType(Enum):
 
 @dataclass(frozen=True)
 class Calc:
-    name: str
+    calc_name: str
     function: Callable
     calc_type: CalcType
-    calc_group: CalcGroup
     t_arg_name: Optional[TimeArgName]
     data_name: Optional[RefDataArgName]
+    group_name: str
+    origin_module: str
 
     @property
     def t_dependent(self):
         return self.t_arg_name is not None
+
+    @property
+    def original_name(self):
+        name, sep, _ = self.calc_name.partition('(')
+        return name.strip()
 
     @property
     def cache_info(self) -> str:
@@ -74,23 +75,26 @@ class Calc:
             return ""
 
 
-class CalcCreator:
+class _CalcCreator:
 
     @staticmethod
-    def create_calcs(function: Callable, dim_ranges: DimensionRanges) -> list[Calc]:
-        non_t_dims, t_arg_name, data_arg_name = CalcCreator._find_dim_data_and_t_args(function)
+    def create_calcs(func_info: _FunctionDetails, dim_ranges: DimensionRanges) -> list[Calc]:
+
+        non_t_dims, t_arg_name, data_arg_name = _CalcCreator._find_dim_data_and_t_args(func_info.func)
 
         template_instance: Calc = Calc(
-                name=function.__name__,
-                function=function,
+                calc_name=func_info.name,
+                function=func_info.func,
                 calc_type=CalcType.from_arguments(t_arg_name, data_arg_name, non_t_dims),
                 t_arg_name=t_arg_name,
-                data_name=data_arg_name
+                data_name=data_arg_name,
+                group_name=func_info.func_group.name,
+                origin_module=func_info.module
             )
 
         if non_t_dims and dim_ranges.non_t:
             dim_combinations: list[tuple[Dimension, ...]] = dim_ranges.create_arg_combinations(non_t_dims.keys())
-            return CalcCreator._create_partial_applied_calcs(dim_combinations, non_t_dims, template_instance)
+            return _CalcCreator._create_partial_applied_calcs(dim_combinations, non_t_dims, template_instance)
         else:
             return [template_instance]
 
@@ -101,7 +105,7 @@ class CalcCreator:
         t_arg_name: Optional[TimeArgName] = None
 
         for param in inspect.signature(func).parameters.values():
-            if issubclass(param.annotation, AlternativeDimension):
+            if issubclass(param.annotation, AltDimension):
                 dimension_tracker[param.annotation] = param.name
             elif param.annotation == Time:
                 if t_arg_name is None:
@@ -126,10 +130,10 @@ class CalcCreator:
             partial_func = functools.partial(template.function, **kwargs)
 
             args_str = ", ".join(f"{dim_arg_names[type(dim)]}={repr(dim.value)}" for dim in combo)
-            combo_name = f"{template.name}({args_str})"
+            combo_name = f"{template.calc_name}({args_str})"
 
             new_calc = Calc(
-                name=combo_name,
+                calc_name=combo_name,
                 function=partial_func,
                 calc_type=template.calc_type,
                 t_arg_name=template.t_arg_name,

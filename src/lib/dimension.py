@@ -1,6 +1,6 @@
 import itertools
 from abc import ABC
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Union, TypeVar, Iterable, Type, Generic, Any, Optional
 
 
@@ -86,15 +86,14 @@ class Time(Dimension):
         super().__init__(name='t', value=value)
 
 
-class AlternativeDimension(Dimension, ABC):
+class AltDimension(Dimension, ABC):
 
     @staticmethod
-    def new_alt_dimension_type(name: str) -> Type['AlternativeDimension']:
-        class _NewAlternativeDimension(AlternativeDimension):
+    def new_alt_dimension_type(name: str) -> Type['AltDimension']:
+        class _NewAltDimension(AltDimension):
             def __init__(self, value):
                 super().__init__(name=name, value=value)
-
-        return _NewAlternativeDimension
+        return _NewAltDimension
 
 
 T = TypeVar('T')
