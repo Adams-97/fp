@@ -1,9 +1,9 @@
 from collections import namedtuple, defaultdict
 
 from calculation_load import load_and_cache_calcs
-from functional.calculation import Calc, CalcType
-from functional.reference import RefData
-from functional.results import ResultHandler
+from src.calculation import Calc, CalcType
+from src.reference import RefData
+from src.results import ResultHandler
 
 module_names = set('model_funcs')
 calculations = load_and_cache_calcs(module_names)

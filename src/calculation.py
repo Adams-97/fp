@@ -5,8 +5,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import NewType, Optional
 
-from functional.dimension import DimensionRanges, OneValDimDict, Time, SecondaryDimension, Dimension
-from functional.reference import RefData
+from src.dimension import DimensionRanges, OneValDimDict, Time, SecondaryDimension, Dimension
+from src.reference import RefData
 
 TimeArgName = NewType('TimeArgName', str)
 RefDataArgName = NewType('RefDataArgName', str)

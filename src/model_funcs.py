@@ -1,5 +1,5 @@
-from functional.dimension import Dimension
-from functional.reference import RefData
+from src.dimension import Dimension
+from src.reference import RefData
 
 
 def t(t: Dimension, ref: RefData):
