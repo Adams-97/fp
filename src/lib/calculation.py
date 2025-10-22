@@ -5,9 +5,9 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import NewType, Optional
 
-from src.lib.dimension import DimensionRanges, _DimensionDict, Time, AltDimension, Dimension
+from src.lib.dimension import DimensionRanges, _AltDimensionDict, Time, AltDimension, Dimension
 from src.lib.reference import RefData
-from src.lib.registry import _FunctionDetails, FunctionGroup
+from src.lib.types import FunctionDetails
 
 TimeArgName = NewType('TimeArgName', str)
 RefDataArgName = NewType('RefDataArgName', str)
@@ -26,7 +26,7 @@ class CalcType(Enum):
     @staticmethod
     def from_arguments(t_name: Optional[TimeArgName],
                        data_name: Optional[RefDataArgName],
-                       secondary_dims: Optional[_DimensionDict[str]]) -> 'CalcType':
+                       secondary_dims: Optional[_AltDimensionDict[str]]) -> 'CalcType':
         match (t_name is not None, data_name is not None, secondary_dims is not None):
             case (False, False, False):
                 return CalcType.NO_ARGS
@@ -78,8 +78,7 @@ class Calc:
 class _CalcCreator:
 
     @staticmethod
-    def create_calcs(func_info: _FunctionDetails, dim_ranges: DimensionRanges) -> list[Calc]:
-
+    def create_calcs(func_info: FunctionDetails, dim_ranges: DimensionRanges) -> list[Calc]:
         non_t_dims, t_arg_name, data_arg_name = _CalcCreator._find_dim_data_and_t_args(func_info.func)
 
         template_instance: Calc = Calc(
@@ -88,19 +87,19 @@ class _CalcCreator:
                 calc_type=CalcType.from_arguments(t_arg_name, data_arg_name, non_t_dims),
                 t_arg_name=t_arg_name,
                 data_name=data_arg_name,
-                group_name=func_info.func_group.name,
+                group_name=func_info.func_group,
                 origin_module=func_info.module
             )
 
-        if non_t_dims and dim_ranges.non_t:
-            dim_combinations: list[tuple[Dimension, ...]] = dim_ranges.create_arg_combinations(non_t_dims.keys())
+        if non_t_dims and dim_ranges.t_range:
+            dim_combinations: list[tuple[AltDimension, ...]] = dim_ranges.create_altdim_combos(non_t_dims.keys())
             return _CalcCreator._create_partial_applied_calcs(dim_combinations, non_t_dims, template_instance)
         else:
             return [template_instance]
 
     @staticmethod
-    def _find_dim_data_and_t_args(func: Callable) -> tuple[Optional[_DimensionDict[str]], Optional[TimeArgName], Optional[RefDataArgName]]:
-        dimension_tracker: _DimensionDict[str] = _DimensionDict[str]()
+    def _find_dim_data_and_t_args(func: Callable) -> tuple[Optional[_AltDimensionDict[str]], Optional[TimeArgName], Optional[RefDataArgName]]:
+        dimension_tracker: _AltDimensionDict[str] = _AltDimensionDict[str]()
         ref_data_name: Optional[RefDataArgName] = None
         t_arg_name: Optional[TimeArgName] = None
 
@@ -120,8 +119,8 @@ class _CalcCreator:
         return dimension_tracker, t_arg_name, ref_data_name
 
     @staticmethod
-    def _create_partial_applied_calcs(dim_combinations: list[tuple[Dimension, ...]],
-                                      dim_arg_names: _DimensionDict[str],
+    def _create_partial_applied_calcs(dim_combinations: list[tuple[AltDimension, ...]],
+                                      dim_arg_names: _AltDimensionDict[str],
                                       template: Calc) -> list[Calc]:
         calcs: list[Calc] = []
         for combo in dim_combinations:
@@ -137,7 +136,9 @@ class _CalcCreator:
                 function=partial_func,
                 calc_type=template.calc_type,
                 t_arg_name=template.t_arg_name,
-                data_name=template.data_name
+                data_name=template.data_name,
+                group_name=template.group_name,
+                origin_module=template.origin_module
             )
 
             calcs.append(new_calc)

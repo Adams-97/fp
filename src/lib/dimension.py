@@ -87,52 +87,53 @@ class Time(Dimension):
 
 
 class AltDimension(Dimension, ABC):
+    pass
 
-    @staticmethod
-    def new_alt_dimension_type(name: str) -> Type['AltDimension']:
-        class _NewAltDimension(AltDimension):
-            def __init__(self, value):
-                super().__init__(name=name, value=value)
-        return _NewAltDimension
+
+def alt_dimension_type(name: str) -> Type[AltDimension]:
+    class _NewAltDimension(AltDimension):
+        def __init__(self, value):
+            super().__init__(name=name, value=value)
+    return _NewAltDimension
 
 
 T = TypeVar('T')
 
 
-class _DimensionDict(dict[type[Dimension], T], Generic[T]):
-    def __init__(self, initial: Optional[dict[Type[Dimension], T]] = None):
+class _AltDimensionDict(dict[type[AltDimension], T], Generic[T]):
+    def __init__(self, initial: Optional[dict[Type[AltDimension], T]] = None):
         super().__init__()
         if initial:
             for k, v in initial.items():
                 self[k] = v
 
-    def __setitem__(self, key: Type[Dimension], value: T):
+    def __setitem__(self, key: Type[AltDimension], value: T):
         if not issubclass(key, Dimension):
-            raise KeyError('Key must be dim')
+            raise KeyError('Key must be AltDimension')
         elif key in self:
             raise KeyError('Key already exists')
         super().__setitem__(key, value)
 
 
 class DimensionRanges:
-    def __init__(self, t_range: Iterable, non_t_ranges: Optional[dict[Type[Dimension], Iterable]] = None):
+    def __init__(self, t_range: Iterable, non_t_ranges: Optional[dict[Type[AltDimension], Iterable]] = None):
         self.t_range: Iterable = t_range
         if non_t_ranges:
-            self._secondary_dim_ranges: _DimensionDict[Iterable] = _DimensionDict(non_t_ranges)
+            self._alt_dim_ranges: _AltDimensionDict[Iterable] = _AltDimensionDict(non_t_ranges)
 
     @property
-    def secondary_dim_ranges(self) -> dict[Type[Dimension], Iterable]:
-        if self._secondary_dim_ranges:
-            return dict(self._secondary_dim_ranges)
+    def altdim_ranges(self) -> dict[Type[AltDimension], Iterable]:
+        if self._alt_dim_ranges:
+            return dict(self._alt_dim_ranges)
         else:
             return {}
 
-    def create_arg_combinations(self, dimensions: Iterable[Type[Dimension]]) -> list[tuple[Dimension, ...]]:
-        if not self._secondary_dim_ranges:
+    def create_altdim_combos(self, dimensions: Iterable[Type[AltDimension]]) -> list[tuple[AltDimension, ...]]:
+        if not self._alt_dim_ranges:
             return []
 
         dim_types = list(dimensions)
-        value_ranges = [self._secondary_dim_ranges[dim_type] for dim_type in dim_types]
+        value_ranges = [self._alt_dim_ranges[dim_type] for dim_type in dim_types]
 
         combinations = []
         for values in itertools.product(*value_ranges):
