@@ -1,11 +1,13 @@
+from queue import Queue
+
 class ResultWriter:
     pass
 
 
 class ResultHandler:
-    def __init__(self, buffer_size: int, writer):
-        self.buffer_size = buffer_size
+    def __init__(self, size: int, writer):
+        self._queue: Queue = Queue(maxsize=size)
         self.writer = writer
 
     def add_result(self, result):
-        pass
+        self.buffer

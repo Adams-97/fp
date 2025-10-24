@@ -14,7 +14,7 @@ def run_model(policy_rows: pd.DataFrame, mort_table: RefTable):
         ('model_funcs', FunctionPriority.GENERAL)
     ])
 
-    dr = DimProjection(range(0, 10))
+    dr = DimProjection(range(0, 100))
 
     calcs = (
         CalcRegistry()
@@ -28,15 +28,16 @@ def run_model(policy_rows: pd.DataFrame, mort_table: RefTable):
                    tables={'mort_table': mort_table},
                    global_values={'disc_rate_pm': (1 + disc_rate_pa) ** (1 / 12) - 1})
 
-    flattened_res = []
     worker = get_worker()
+    flattened_res = {}
+    for calc in calcs:
+        flattened_res[calc.name] = []
 
     for index, policy in policy_rows.iterrows():
         for t in dr.t_range:
-            row = {'t': t}
             for calc in calcs:
-                row[calc.name] = calc.function(t, **{str(calc.data_arg): data})
-                flattened_res.append(row)
+                res = calc.function(t, **{str(calc.data_arg): data})
+                flattened_res[calc.name].append(res)
     print(f"Worker {worker.address} processed policy partition")
     return pd.DataFrame(flattened_res)
 
@@ -44,17 +45,17 @@ def run_model(policy_rows: pd.DataFrame, mort_table: RefTable):
 if __name__ == "__main__":
     client = Client(processes=True)
     print(client.dashboard_link)
+
     tables = CsvTable(csv='mort.csv', index_cols=['age'])
     send_data = client.scatter(tables, broadcast=True)
 
     df: dask.dataframe.DataFrame = dd.read_csv('policy.csv')
     meta = pd.DataFrame(
-        columns=['t', 'age', 'expected_claim', 'num_alive', 'num_deaths', 'pv_claim', 'q_x', 'q_x_m', 'v']
+        columns=['age', 'expected_claim', 'num_alive', 'num_deaths', 'pv_claim', 'q_x', 'q_x_m', 't', 'v']
     )
-    repartitioned_df = df.repartition(npartitions=40)
+    repartitioned_df = df.repartition(npartitions=100)
     res: dask.dataframe.DataFrame = repartitioned_df.map_partitions(run_model, mort_table=send_data, meta=meta)
-    res2 = res.groupby(['num_alive']).count().compute()
+    res2 = res.shape[0].compute()
     print(res2)
     1
-
-
+    # 100_000_000

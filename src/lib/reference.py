@@ -3,6 +3,8 @@ from pathlib import Path
 from typing import Any, Optional
 from dataclasses import dataclass
 
+import numpy as np
+
 
 @dataclass(frozen=True)
 class LookupArgs:
@@ -14,7 +16,6 @@ class LookupArgs:
 class RefTable(ABC):
     def __init__(self, index_cols: list[str]):
         self._index_cols: list[str] = index_cols
-        self._cache: dict[LookupArgs, Any] = {}
         self._upper_col_bound: Optional[int] = None
 
     @staticmethod
@@ -42,6 +43,10 @@ class RefTable(ABC):
     @property
     @abstractmethod
     def non_index_cols(self) -> list[str]:
+        pass
+
+    @abstractmethod
+    def col_array(self, col_name: str) -> np.ndarray:
         pass
 
     @abstractmethod
@@ -88,6 +93,9 @@ class CsvTable(RefTable):
 
         return df
 
+    def col_array(self, col_name: str) -> np.ndarray:
+        return self._df[col_name].to_numpy()
+
     @property
     def non_index_cols(self) -> list[str]:
         return [col for col in self._df.columns if col not in self._df.index.names]
@@ -107,8 +115,9 @@ class CsvTable(RefTable):
 
 @dataclass(frozen=True)
 class RefData:
-    tables: dict[str, RefTable] | None = None
-    values: dict[str, Any] | None = None
+    policy_values: dict[str, Any]
+    tables: Optional[dict[str, RefTable]] = None
+    global_values: Optional[dict[str, Any]] = None
 
     def __hash__(self):
         return hash(id(self))

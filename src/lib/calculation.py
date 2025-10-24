@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import NewType, Optional
 
-from src.lib.dimension import DimensionRanges, _AltDimensionDict, Time, AltDimension, Dimension
+from src.lib.dimension import DimProjection, _AltDimensionDict, Time, AltDimension, Dimension
 from src.lib.reference import RefData
 from src.lib.types import FunctionDetails
 
@@ -16,30 +16,30 @@ RefDataArgName = NewType('RefDataArgName', str)
 class CalcType(Enum):
     TIME_ONLY = 1
     REF_ONLY = 2
-    SECONDARY_DIMS_ONLY = 3
+    ALT_DIMS_ONLY = 3
     TIME_AND_REF = 4
-    TIME_AND_SECONDARY_DIMS = 5
-    REF_AND_SECONDARY_DIMS = 6
+    TIME_AND_ALT_DIMS = 5
+    REF_AND_ALT_DIMS = 6
     ALL = 7
     NO_ARGS = 8
 
     @staticmethod
     def from_arguments(t_name: Optional[TimeArgName],
                        data_name: Optional[RefDataArgName],
-                       secondary_dims: Optional[_AltDimensionDict[str]]) -> 'CalcType':
-        match (t_name is not None, data_name is not None, secondary_dims is not None):
+                       alt_dims: _AltDimensionDict[str]) -> 'CalcType':
+        match (t_name is not None, data_name is not None, bool(alt_dims)):
             case (False, False, False):
                 return CalcType.NO_ARGS
             case (False, False, True):
-                return CalcType.SECONDARY_DIMS_ONLY
+                return CalcType.ALT_DIMS_ONLY
             case (False, True, False):
                 return CalcType.REF_ONLY
             case (False, True, True):
-                return CalcType.REF_AND_SECONDARY_DIMS
+                return CalcType.REF_AND_ALT_DIMS
             case (True, False, False):
                 return CalcType.TIME_ONLY
             case (True, False, True):
-                return CalcType.TIME_AND_SECONDARY_DIMS
+                return CalcType.TIME_AND_ALT_DIMS
             case (True, True, False):
                 return CalcType.TIME_AND_REF
             case (True, True, True):
@@ -48,21 +48,21 @@ class CalcType(Enum):
 
 @dataclass(frozen=True)
 class Calc:
-    calc_name: str
+    name: str
     function: Callable
-    calc_type: CalcType
-    t_arg_name: Optional[TimeArgName]
-    data_name: Optional[RefDataArgName]
+    type: CalcType
+    t_arg: Optional[TimeArgName]
+    data_arg: Optional[RefDataArgName]
     group_name: str
     origin_module: str
 
     @property
     def t_dependent(self):
-        return self.t_arg_name is not None
+        return self.t_arg is not None
 
     @property
     def original_name(self):
-        name, sep, _ = self.calc_name.partition('(')
+        name, sep, _ = self.name.partition('(')
         return name.strip()
 
     @property
@@ -78,15 +78,15 @@ class Calc:
 class _CalcCreator:
 
     @staticmethod
-    def create_calcs(func_info: FunctionDetails, dim_ranges: DimensionRanges) -> list[Calc]:
+    def create_calcs(func_info: FunctionDetails, dim_ranges: DimProjection) -> list[Calc]:
         non_t_dims, t_arg_name, data_arg_name = _CalcCreator._find_dim_data_and_t_args(func_info.func)
 
         template_instance: Calc = Calc(
-                calc_name=func_info.name,
+                name=func_info.name,
                 function=func_info.func,
-                calc_type=CalcType.from_arguments(t_arg_name, data_arg_name, non_t_dims),
-                t_arg_name=t_arg_name,
-                data_name=data_arg_name,
+                type=CalcType.from_arguments(t_arg_name, data_arg_name, non_t_dims),
+                t_arg=t_arg_name,
+                data_arg=data_arg_name,
                 group_name=func_info.func_group,
                 origin_module=func_info.module
             )
@@ -98,7 +98,7 @@ class _CalcCreator:
             return [template_instance]
 
     @staticmethod
-    def _find_dim_data_and_t_args(func: Callable) -> tuple[Optional[_AltDimensionDict[str]], Optional[TimeArgName], Optional[RefDataArgName]]:
+    def _find_dim_data_and_t_args(func: Callable) -> tuple[_AltDimensionDict[str], Optional[TimeArgName], Optional[RefDataArgName]]:
         dimension_tracker: _AltDimensionDict[str] = _AltDimensionDict[str]()
         ref_data_name: Optional[RefDataArgName] = None
         t_arg_name: Optional[TimeArgName] = None
@@ -116,6 +116,7 @@ class _CalcCreator:
                     ref_data_name = RefDataArgName(param.name)
                 else:
                     raise ValueError('More than 1 RefData argument in function')
+
         return dimension_tracker, t_arg_name, ref_data_name
 
     @staticmethod
@@ -129,14 +130,14 @@ class _CalcCreator:
             partial_func = functools.partial(template.function, **kwargs)
 
             args_str = ", ".join(f"{dim_arg_names[type(dim)]}={repr(dim.value)}" for dim in combo)
-            combo_name = f"{template.calc_name}({args_str})"
+            combo_name = f"{template.name}({args_str})"
 
             new_calc = Calc(
-                calc_name=combo_name,
+                name=combo_name,
                 function=partial_func,
-                calc_type=template.calc_type,
-                t_arg_name=template.t_arg_name,
-                data_name=template.data_name,
+                type=template.type,
+                t_arg=template.t_arg,
+                data_arg=template.data_arg,
                 group_name=template.group_name,
                 origin_module=template.origin_module
             )

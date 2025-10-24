@@ -115,7 +115,7 @@ class _AltDimensionDict(dict[type[AltDimension], T], Generic[T]):
         super().__setitem__(key, value)
 
 
-class DimensionRanges:
+class DimProjection:
     def __init__(self, t_range: Iterable, non_t_ranges: Optional[dict[Type[AltDimension], Iterable]] = None):
         self.t_range: Iterable = t_range
         if non_t_ranges:

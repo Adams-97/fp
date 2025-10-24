@@ -3,11 +3,10 @@ import importlib
 import inspect
 from collections.abc import Callable
 from dataclasses import dataclass, replace, astuple
-from enum import Enum
 from typing import Optional
 
 from src.lib.calculation import Calc, _CalcCreator
-from src.lib.dimension import DimensionRanges
+from src.lib.dimension import DimProjection
 from src.lib.types import FunctionDetails, FunctionPriority
 
 
@@ -76,7 +75,7 @@ class CalcRegistry:
         self._function_groups: set[str] = set()
         self._search_modules: set[CalcModule] = set()
 
-    def create_calculations(self, dim_ranges: DimensionRanges, function_cache_size: Optional[int] = 10) -> list[Calc]:
+    def create_calculations(self, dim_ranges: DimProjection, function_cache_size: Optional[int] = 10) -> list[Calc]:
         model_calculations: list[Calc] = []
         loaded_functions: list[FunctionDetails] = _load_functions(list(self._search_modules))
 

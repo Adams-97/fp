@@ -4,12 +4,12 @@ from src.lib.registry import register_func_group
 
 
 @register_func_group('a')
-def t(t: Time):
+def t(t: Time, data: RefData):
     """time"""
     return t
 
 
-@register_func_group('b')
+@register_func_group('a')
 def num_alive(t: Time, data: RefData):
     """probability that life is alive at time t, given alive at time 0"""
     if t == 0:
@@ -27,40 +27,44 @@ def num_deaths(t: Time, data: RefData):
         return num_alive(t, data) * q_x_m(t, data)
 
 
-@register_func_group('c')
+@register_func_group('a')
 def q_x(t: Time, data: RefData):
     """Annual mortality rate"""
     return data.tables['mort_table'].lookup(index_values={'age': age(t, data)}, return_col='q_x')
 
 
-@register_func_group('b')
+@register_func_group('a')
 def q_x_m(t: Time, data: RefData):
     """Monthly mortality rate"""
     return 1 - (1 - q_x(t, data)) ** (1 / 12)
 
 
+@register_func_group('a')
 def age(t: Time, data: RefData):
     """age in years at time t"""
     if t == 0:
-        return data.values["init_age"]
+        return data.policy_values["init_age"]
     elif t % 12 == 0:
         return age(t - 1, data) + 1
     else:
         return age(t - 1, data)
 
 
+@register_func_group('a')
 def expected_claim(t: Time, data: RefData):
-    return data.values["sum_assured"] * num_deaths(t, data)
+    return data.policy_values["sum_assured"] * num_deaths(t, data)
 
 
+@register_func_group('a')
 def v(t: Time, data: RefData):
     """Present value factor for time t, discounting back to time 0"""
     if t == 0:
         return 1.0
     else:
-        return v(t - 1, data) / (1 + data.values['disc_rate_pm'])
+        return v(t - 1, data) / (1 + data.global_values['disc_rate_pm'])
 
 
+@register_func_group('a')
 def pv_claim(t: Time, data: RefData):
     """present value of the expected claim occuring at time t"""
     return expected_claim(t, data) * v(t, data)
